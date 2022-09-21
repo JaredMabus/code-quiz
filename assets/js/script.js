@@ -53,6 +53,7 @@ var goBackBtn = document.getElementById("go-back-btn");
 var highScores = [];
 var currentScore = 0;
 var totalCorrect = 0;
+var countdown = 0;
 
 var newQuiz = {
   initials: "",
@@ -94,9 +95,6 @@ var questions = [
   // },
 ];
 
-// COUNTDOWN LOGIC
-var countdown = 25;
-
 var updateCountdown = function () {
   countdownEl.textContent = countdown;
   if (countdown <= 0) {
@@ -120,6 +118,7 @@ var changeDisplay = function (showId, hideId) {
   return;
 };
 
+// Update/load questions to page
 var loadQuestion = function () {
   if (questionIndex >= questions.length) {
     return;
@@ -159,6 +158,20 @@ var loadQuestion = function () {
   }
 };
 
+// used .sort to set highscores: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
+var showHighScores = function () {
+  var sortedArray = highScores.sort(function (a, b) {
+    if (a.score < b.score) {
+      return 1;
+    } else if (a.score > b.score) {
+      return -1;
+    }
+  });
+  console.log(sortedArray);
+};
+
+showHighScores();
+
 var setFeedback = function (isCorrect) {
   if (isCorrect === "true") {
     feedbackEl.textContent = "Correct!";
@@ -175,14 +188,15 @@ var setScore = function () {
   currentScoreEl.textContent = currentScore;
 };
 
-var stopQuiz = function (timer) {
+var stopQuiz = function () {
   clearInterval(timer);
   setScore();
   changeDisplay("quiz-summary", "quiz");
 };
 
+// Reset the quiz
 var resetQuiz = function () {
-  countdown = 20;
+  countdown = 25;
   questionIndex = 0;
   currentScore = 0;
   totalCorrect = 0;
@@ -190,22 +204,27 @@ var resetQuiz = function () {
   changeDisplay(null, "answer-feedback");
 };
 
-// START QUIZ
-var startQuiz = function () {
-  resetQuiz();
-  var startTimer = setInterval(function () {
+// start countdown
+var startTimer = function () {
+  timer = setInterval(function () {
     countdown--;
-    updateCountdown(startTimer);
+    updateCountdown();
+
     if (countdown <= 0 || questionIndex >= questions.length) {
-      stopQuiz(startTimer);
+      stopQuiz();
     }
   }, 1000);
+};
 
+// Start the quiz
+var startQuiz = function () {
+  resetQuiz();
+  startTimer();
   changeDisplay("quiz", "start-quiz");
   loadQuestion();
 };
 
-// EVENT LISTENERS
+// Event listeners
 startQuizBtn.addEventListener("click", startQuiz);
 goBackBtn.addEventListener("click", function () {
   changeDisplay("start-quiz", "high-scores");
@@ -220,9 +239,11 @@ answerWrapper.addEventListener("click", function (e) {
     totalCorrect++;
     setFeedback(isCorrect);
     loadQuestion();
-  } else {
+  } else if (isCorrect === "false") {
     penalizeWrongAnswer();
     setFeedback(isCorrect);
+  } else {
+    return;
   }
 });
 
@@ -237,7 +258,9 @@ formData.addEventListener("submit", function (e) {
       score: currentScore,
     };
     highScores.push(newQuiz);
+    console.log(highScores);
     changeDisplay("high-scores", "quiz-summary");
+    showHighScores();
   } else {
     console.log("Between 2 and 5 characters");
   }
