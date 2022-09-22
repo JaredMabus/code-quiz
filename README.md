@@ -6,10 +6,13 @@ This project is code quiz webpage. Click the "Start Quiz" to begin. There is a 7
 
 ## Deployment
 
-GitPages: ...
+GitPages: https://jaredmabus.github.io/code-quiz/
 
 ## Screenshot
 
 The following image shows the web application's appearance and functionality:
 
 ![Screen shot of page](/assets/images/screenshot.png)
+![Screen shot of page](/assets/images/screenshot1.png)
+![Screen shot of page](/assets/images/screenshot2.png)
+![Screen shot of page](/assets/images/screenshot3.png)
