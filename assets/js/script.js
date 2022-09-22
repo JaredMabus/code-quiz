@@ -1,65 +1,33 @@
-// START: This is the start of your pseudocode.
-// INPUT: This is data retrieved from the user through typing or through an input device.
-// READ / GET: This is input used when reading data from a data file.
-// PRINT, DISPLAY, SHOW: This will show your output to a screen or the relevant output device.
-// COMPUTE, CALCULATE, DETERMINE: This is used to calculate the result of an expression.
-// SET, INIT: To initialize values
-// INCREMENT, BUMP: To increase the value of a variable
-// DECREMENT: To reduce the value of a variable
-
-/*
-PROGRAM code-quiz
-
-INIT:
-    1. question and answer objects
-    2. countdown inital time
-    3. event listeners
-    4. query selectors
-    5. user info
-
-Start Quiz: 
-    COMPUTE: countdown time and end quiz if time is up.
-    GET and DISPLAY: Questions and answers from objects stored in JS file
-
-    INPUT: Create event handlers to get user question input
-    COMPUTE: correct or wrong answer
-    DISPLAY: "Correct" or "Wrong" answer at the bottom of the quiz
-    
-    SET: QUIZ score
-
-Summary Page:
-    DISPLAY: quiz score
-    SET: user score and initials
-    SET: new user data to array and sort based on scores
-
-High scores page:
-    DISPLAY: highscores
-    DISPLAY: Restart and clear scores buttons
-*/
-
-// HTML Elements
 var countdownEl = document.getElementById("countdown");
 var startQuizBtn = document.getElementById("start-quiz-btn");
 var questionEl = document.getElementById("current-question");
 var answerBtns = document.querySelectorAll(".answer-btn");
 var answerWrapper = document.getElementById("answers");
 var feedbackEl = document.getElementById("feedback-value");
-var questionIndex = 0;
 var formData = document.getElementById("user-form");
 var initialsInput = document.getElementById("initials-input");
 var currentScoreEl = document.getElementById("current-score");
+var highScoresSection = document.getElementById("high-scores");
 var goBackBtn = document.getElementById("go-back-btn");
+var clearHighScores = document.getElementById("clear-high-score-btn");
+var scoresWrapper = document.getElementById("scores-wrapper");
+var viewHighScoresBtn = document.querySelector(".high-scores-btn");
 
+// global variables
 var highScores = [];
 var currentScore = 0;
 var totalCorrect = 0;
 var countdown = 0;
+var questionIndex = 0;
+var quizStarted = false;
 
+// New quiz object submitted at the end of the quiz
 var newQuiz = {
   initials: "",
   score: 0,
 };
 
+// Array with question objects
 var questions = [
   {
     question: "Commonly used data types DO NOT include:",
@@ -71,28 +39,28 @@ var questions = [
     answers: ["quotes", "curly brakets", "parenthesis", "square brakets"],
     correctAnswer: "parenthesis",
   },
-  // {
-  //   question: "Arrays in JavaScript can be used to store _____.",
-  //   answers: [
-  //     "numbers and strings",
-  //     "other arrays",
-  //     "booleans",
-  //     "all of the above",
-  //   ],
-  //   correctAnswer: "parenthesis",
-  // },
-  // {
-  //   question:
-  //     "String values must be enclosed within _____ when being assigned to variables.",
-  //   answers: ["commas", "curly brakets", "quotes", "parenthesis"],
-  //   correctAnswer: "quotes",
-  // },
-  // {
-  //   question:
-  //     "A very useful tool used during development and debugging for printing content to the debugger is:",
-  //   answers: ["JavaScript", "termical/bash", "for loops", "console.log"],
-  //   correctAnswer: "console.log",
-  // },
+  {
+    question: "Arrays in JavaScript can be used to store _____.",
+    answers: [
+      "numbers and strings",
+      "other arrays",
+      "booleans",
+      "all of the above",
+    ],
+    correctAnswer: "all of the above",
+  },
+  {
+    question:
+      "String values must be enclosed within _____ when being assigned to variables.",
+    answers: ["commas", "curly brakets", "quotes", "parenthesis"],
+    correctAnswer: "quotes",
+  },
+  {
+    question:
+      "A very useful tool used during development and debugging for printing content to the debugger is:",
+    answers: ["JavaScript", "termical/bash", "for loops", "console.log"],
+    correctAnswer: "console.log",
+  },
 ];
 
 var updateCountdown = function () {
@@ -107,7 +75,7 @@ var penalizeWrongAnswer = function () {
   updateCountdown();
 };
 
-// DISPLAY LOGIC
+// Hide or show sections based on two id's
 var changeDisplay = function (showId, hideId) {
   if (showId !== null && showId !== undefined) {
     document.getElementById(showId).setAttribute("style", "display: flex;");
@@ -115,37 +83,33 @@ var changeDisplay = function (showId, hideId) {
   if (hideId !== null && hideId !== undefined) {
     document.getElementById(hideId).setAttribute("style", "display: none;");
   }
-  return;
 };
 
-// Update/load questions to page
+// Load new questions to page and remove previous ones
 var loadQuestion = function () {
   if (questionIndex >= questions.length) {
     return;
   }
   var currentQuestion = questions[questionIndex];
   var answerBtns = document.querySelectorAll(".answer-btn");
-  var answerIndex = 0; // index for answer buttons
+  var answerIndex = 0;
 
-  // remove previous answer buttons
+  // Remove previous answer buttons
   if (answerBtns.length > 0) {
-    for (var i = 0; i < answerBtns.length; i++) {
-      answerWrapper.removeChild(answerBtns[i]);
-    }
+    answerWrapper.innerHTML = "";
   }
 
-  // update current html question h2
+  // Update current html question h2
   questionEl.textContent = currentQuestion.question;
 
-  // create, add attributes, and append question btns to answer element
+  // Create, add attributes, and append question buttons to answer element
   for (var i = 0; i < currentQuestion.answers.length; i++) {
     var currentAnswer = currentQuestion.answers[answerIndex];
     var correctAnswer = currentQuestion.correctAnswer;
 
-    // create element
     var newBtn = document.createElement("button");
 
-    // add attributes
+    // Add attributes
     newBtn.setAttribute("class", "answer-btn");
     newBtn.setAttribute(
       "data-correct-answer",
@@ -158,20 +122,51 @@ var loadQuestion = function () {
   }
 };
 
-// used .sort to set highscores: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
-var showHighScores = function () {
-  var sortedArray = highScores.sort(function (a, b) {
+// used .sort to order highscores: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
+var sortHighScores = function () {
+  highScores.sort(function (a, b) {
     if (a.score < b.score) {
       return 1;
     } else if (a.score > b.score) {
       return -1;
     }
   });
-  console.log(sortedArray);
 };
 
-showHighScores();
+var clearScores = function () {
+  highScores = [];
+  scoresWrapper.innerHTML = "";
+};
 
+// Display each high score
+var loadHighScores = function () {
+  if (highScores.length > 0) {
+    // Clear scores elements
+    scoresWrapper.innerHTML = "";
+    // Create new score elements
+    sortHighScores();
+    highScores.forEach(function (score, index) {
+      var newScore = document.createElement("div");
+      var indexEl = document.createElement("p");
+      var initialsEl = document.createElement("p");
+      var scoreEl = document.createElement("p");
+
+      // Set text values and attributes
+      indexEl.textContent = `${index + 1}.`;
+      initialsEl.textContent = `${score.initials.toUpperCase()} -`;
+      scoreEl.textContent = score.score;
+      newScore.setAttribute("class", "score");
+
+      // Append to HTML
+      scoresWrapper.appendChild(newScore);
+      newScore.appendChild(indexEl);
+      newScore.appendChild(initialsEl);
+      newScore.appendChild(scoreEl);
+    });
+  }
+};
+
+// Update question feedback
 var setFeedback = function (isCorrect) {
   if (isCorrect === "true") {
     feedbackEl.textContent = "Correct!";
@@ -182,21 +177,24 @@ var setFeedback = function (isCorrect) {
   }
 };
 
+// Set score
 var setScore = function () {
   var totalQuestions = questions.length;
   currentScore = Math.ceil((totalCorrect / totalQuestions) * 100);
   currentScoreEl.textContent = currentScore;
 };
 
+// Stop quiz
 var stopQuiz = function () {
   clearInterval(timer);
+  quizStarted = false;
   setScore();
   changeDisplay("quiz-summary", "quiz");
 };
 
 // Reset the quiz
 var resetQuiz = function () {
-  countdown = 25;
+  countdown = 75;
   questionIndex = 0;
   currentScore = 0;
   totalCorrect = 0;
@@ -204,12 +202,11 @@ var resetQuiz = function () {
   changeDisplay(null, "answer-feedback");
 };
 
-// start countdown
+// Start countdown
 var startTimer = function () {
   timer = setInterval(function () {
     countdown--;
     updateCountdown();
-
     if (countdown <= 0 || questionIndex >= questions.length) {
       stopQuiz();
     }
@@ -218,6 +215,7 @@ var startTimer = function () {
 
 // Start the quiz
 var startQuiz = function () {
+  quizStarted = true;
   resetQuiz();
   startTimer();
   changeDisplay("quiz", "start-quiz");
@@ -227,7 +225,13 @@ var startQuiz = function () {
 // Event listeners
 startQuizBtn.addEventListener("click", startQuiz);
 goBackBtn.addEventListener("click", function () {
-  changeDisplay("start-quiz", "high-scores");
+  if (quizStarted) {
+    changeDisplay(null, "high-scores");
+  } else {
+    changeDisplay("start-quiz", "high-scores");
+    changeDisplay(null, "quiz-summary");
+    changeDisplay(null, "high-scores");
+  }
 });
 
 // Get user answer input
@@ -239,6 +243,10 @@ answerWrapper.addEventListener("click", function (e) {
     totalCorrect++;
     setFeedback(isCorrect);
     loadQuestion();
+    // End quiz if last question
+    if (questionIndex >= questions.length) {
+      stopQuiz();
+    }
   } else if (isCorrect === "false") {
     penalizeWrongAnswer();
     setFeedback(isCorrect);
@@ -258,10 +266,24 @@ formData.addEventListener("submit", function (e) {
       score: currentScore,
     };
     highScores.push(newQuiz);
-    console.log(highScores);
-    changeDisplay("high-scores", "quiz-summary");
-    showHighScores();
+    changeDisplay("high-scores", null);
+    changeDisplay("start-quiz", "quiz-summary");
+    loadHighScores();
   } else {
-    console.log("Between 2 and 5 characters");
+    alert("Initials must be between 2 and 5 characters");
   }
 });
+
+// Show and hide high scores section
+viewHighScoresBtn.addEventListener("click", function () {
+  var isVisible = highScoresSection.getAttribute("data-visible");
+  if (isVisible === "true") {
+    highScoresSection.setAttribute("data-visible", "false");
+    changeDisplay("high-scores", null);
+  } else {
+    highScoresSection.setAttribute("data-visible", "true");
+    changeDisplay(null, "high-scores");
+  }
+});
+
+clearHighScores.addEventListener("click", clearScores);
